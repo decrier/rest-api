@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update User</title>
+</head>
+
+<body>
+  <nav><a href="/">All users</a> | <a href="new-user.html">Create new user</a></nav>
+  <h1>Update user</h1>
+
+  <form id="form">
+    <label for="name">Name</label>
+    <input type="text" name="name" id="username">
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email">
+    <button type="submit" id="sendUpdate">Update</button>
+  </form>
+
+  <script>
+    // Konstanten anlegen
+    // URL-Query aus der URL selektieren
+    // ! Dieser Code funktioniert nur, wenn genau ein Schlüssel-Wert-Paar in der URL-Query existiert. Bei mehreren Werten muss der Code entsprechend angepasst werden
+    const urlquery = window.location.search;
+    console.log(urlquery);
+    // Fragezeichen entfernen
+    const strId = urlquery.slice(1);
+    console.log(strId);
+    // in ein Array aus Schlüssel und Wert konvertieren
+    const pairs = strId.split('=');
+    console.log(pairs);
+    // Wert aus dem Array speichern
+    const id = pairs[1];
+    console.log(id);
+
+    const form = document.querySelector('#form');
+    const username = document.querySelector('#username');
+    const usermail = document.querySelector('#email');
+    const btn = document.querySelector('#sendUpdate');
+    const request = new XMLHttpRequest();
+
+    // Get-Request für die Userdaten absetzen
+    request.open('get', `/users/${id}`);
+    request.send(null);
+
+    request.onload = () => {
+      // Datensatz als JSON-Objekt konvertieren
+      const res = JSON.parse(request.responseText);
+      // aktuelle Userdaten in die Formularfelder einsetzen
+      username.value = res[0].name;
+      usermail.value = res[0].email;
+    }
+
+    // Submit-Event registrieren
+    form.addEventListener('submit', evt => {
+      // Standard-Verhalten des Formulars deaktivieren
+      evt.preventDefault();
+      evt.stopPropagation();
+      // leeres Objekt initialisieren
+      let formObject = {};
+
+      // Formulardaten serialisieren ...
+      const data = new FormData(form);
+      // ... und in einen URL-Query-String konvertieren
+      data.forEach((value, key) => formObject[key] = value);
+
+      console.log(formObject);
+
+      // PATCH-Route für das Datensatz-Update aufrufen
+      request.open('PATCH', `/users/${id}`);
+      // Request sendet JSON-Daten
+      request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+      // formObject in JSPN-String komvertieren und der Konstanten body hinzufügen
+      const body = JSON.stringify(formObject);
+      // Request mit JSON-String senden
+      request.send(body);
+
+      request.onload = () => {
+        // Antwort in JSON-Objekt konvertieren und speichern
+        const res = JSON.parse(request.responseText);
+        console.log(res.status);
+
+        if (res.status === 'OK') {
+          // Weiterleitung zzur Startseite (Übersicht)
+          window.location = 'http://localhost:3002';
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
